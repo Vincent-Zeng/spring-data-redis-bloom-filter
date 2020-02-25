@@ -6,10 +6,10 @@
 
     <groupId>org.springframework.data</groupId>
     <artifactId>spring-data-redis-bloom-filter</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.1</version>
 
     <properties>
-        <spring-boot.version>2.1.2.RELEASE</spring-boot.version>
+        <spring-boot.version>2.1.1.RELEASE</spring-boot.version>
         <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
         <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
     </properties>
@@ -78,4 +78,17 @@
             </plugin>
         </plugins>
     </build>
+
+    <distributionManagement>
+        <repository>
+            <id>taqu</id>
+            <name>Internal Releases</name>
+            <url>http://nexus.proxy.internal.taqu.cn/nexus/content/repositories/thirdparty/</url>
+        </repository>
+        <snapshotRepository>
+            <id>taqu</id>
+            <name>Internal Releases</name>
+            <url>http://nexus.proxy.internal.taqu.cn/nexus/content/repositories/thirdparty/</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>

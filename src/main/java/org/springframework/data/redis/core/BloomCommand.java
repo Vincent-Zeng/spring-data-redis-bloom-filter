@@ -15,8 +15,10 @@ public enum BloomCommand {
     RESERVE("BF.RESERVE"),
     ADD("BF.ADD"),
     MADD("BF.MADD"),
+    INSERT("BF.INSERT"),
     EXISTS("BF.EXISTS"),
     MEXISTS("BF.MEXISTS");
+
 
     private String command;
 

@@ -19,14 +19,13 @@ import redis.clients.jedis.Jedis;
  * @Description:
  */
 @Configuration
-@ConditionalOnMissingClass("io.lettuce.core.RedisClient")
 @ConditionalOnClass({GenericObjectPool.class, JedisConnection.class, Jedis.class})
 @ConditionalOnBean(StringRedisTemplate.class)
 public class BloomAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(BloomOperations.class)
-    public BloomOperations bloomOperations(StringRedisTemplate redisTemplate) {
-        return new DefaultBloomOperations(redisTemplate);
+    public BloomOperations<String, String> bloomOperations(StringRedisTemplate bloomStringRedisTemplate) {
+        return new DefaultBloomOperations<>(bloomStringRedisTemplate);
     }
 }

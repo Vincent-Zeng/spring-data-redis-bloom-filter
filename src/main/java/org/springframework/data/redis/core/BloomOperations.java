@@ -12,12 +12,12 @@ public interface BloomOperations<K, V> {
      *
      * @param: key
      * @param: errorRate
-     * @param: initCapacity
+     * @param: capacity
      * @return:
      * @auther: Jackie
      * @date: 2019-07-26 13:34
      */
-    void createFilter(K key, double errorRate, long initCapacity);
+    void reserve(K key, double errorRate, long capacity);
 
     /**
      * Add an element to filter
@@ -39,7 +39,27 @@ public interface BloomOperations<K, V> {
      * @auther: Jackie
      * @date: 2019-07-26 13:36
      */
-    Boolean[] addMulti(K key, V... values);
+    Boolean[] madd(K key, V... values);
+
+    /**
+     * reserve + madd
+     * @param key
+     * @param capacity
+     * @param errorRate
+     * @param values
+     * @return
+     */
+    Boolean[] insert(K key, long capacity, double errorRate,  V... values);
+
+    /**
+     * reserve + add with default config
+     * capacity: 1000
+     * errorRate: 0.01
+     * @param key
+     * @param values
+     * @return
+     */
+    Boolean[] insert(K key, V... values);
 
     /**
      * Check an element is exists
@@ -61,7 +81,7 @@ public interface BloomOperations<K, V> {
      * @auther: Jackie
      * @date: 2019-07-26 13:39
      */
-    Boolean[] existsMulti(K key, V... values);
+    Boolean[] mexists(K key, V... values);
 
     /**
      * Delete a Bloom Filter
