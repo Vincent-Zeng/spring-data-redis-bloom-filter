@@ -35,7 +35,7 @@ public class DefaultBloomOperations<K, V> extends AbstractOperations<K, V> imple
         }, true);
     }
 
-    public Boolean[] madd(K key, V... values) {
+    public Boolean[] madd(K key, List<V> values) {
         byte[][] rawArgs = rawArgs(key, values);
         return execute(connection -> {
             List<Long> ls = (List<Long>) connection.execute(BloomCommand.MADD.getCommand(), rawArgs);
@@ -44,32 +44,24 @@ public class DefaultBloomOperations<K, V> extends AbstractOperations<K, V> imple
     }
 
     @Override
-    public Boolean[] insert(K key, long capacity, double errorRate, V... values) {
+    public Boolean[] insert(K key, long capacity, double errorRate, List<V> values) {
         String capacityStr = String.valueOf(capacity);
         String errorRateStr = String.valueOf(errorRate);
         final String CAPACITY = "CAPACITY";
         final String ERROR_RATE = "ERROR";
         final String ITEMS = "ITEMS";
 
-        List<Object> arg_part_list = new ArrayList<>(Arrays.asList(
+        List<Object> arg_part_list = Arrays.asList(
                 CAPACITY, capacityStr, ERROR_RATE,
                 errorRateStr, ITEMS
-        ));
-        arg_part_list.addAll(Arrays.asList(values));
+        );
 
-        Object[] arg_part_arr = arg_part_list.toArray(new Object[arg_part_list.size()]);
-        byte[][] rawArgs = rawArgs(key, arg_part_arr);
+        byte[][] rawArgs = rawArgs(key, arg_part_list, values);
 
         return execute(connection -> {
             List<Long> ls = (List<Long>) connection.execute(BloomCommand.INSERT.getCommand(), rawArgs);
             return ls.stream().map(l -> Objects.equals(l, 1L)).toArray(Boolean[]::new);
         }, true);
-    }
-
-    @SafeVarargs
-    @Override
-    public final Boolean[] insert(K key, V... values) {
-        return this.insert(key, 1000, 0.01, values);
     }
 
     public Boolean exists(K key, V value) {
@@ -81,7 +73,7 @@ public class DefaultBloomOperations<K, V> extends AbstractOperations<K, V> imple
         }, true);
     }
 
-    public Boolean[] mexists(K key, V... values) {
+    public Boolean[] mexists(K key, List<V> values) {
         byte[][] rawArgs = rawArgs(key, values);
         return execute(connection -> {
             List<Long> ls = (List<Long>) connection.execute(BloomCommand.MEXISTS.getCommand(), rawArgs);
@@ -93,11 +85,28 @@ public class DefaultBloomOperations<K, V> extends AbstractOperations<K, V> imple
         return template.delete(key);
     }
 
-    private byte[][] rawArgs(Object key, Object... values) {
-        byte[][] rawArgs = new byte[1 + values.length][];
+    private byte[][] rawArgs(Object key, List<V> values) {
+        byte[][] rawArgs = new byte[1 + values.size()][];
 
         int i = 0;
         rawArgs[i++] = rawKey(key);
+
+        for (Object value : values) {
+            rawArgs[i++] = rawValue(value);
+        }
+
+        return rawArgs;
+    }
+
+    private byte[][] rawArgs(Object key, List<Object> params, List<V> values) {
+        byte[][] rawArgs = new byte[1 + params.size() + values.size()][];
+
+        int i = 0;
+        rawArgs[i++] = rawKey(key);
+
+        for (Object param : params) {
+            rawArgs[i++] = rawValue(param);
+        }
 
         for (Object value : values) {
             rawArgs[i++] = rawValue(value);

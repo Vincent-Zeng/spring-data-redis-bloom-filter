@@ -1,5 +1,7 @@
 package org.springframework.data.redis.core;
 
+import java.util.List;
+
 /**
  * @Auther: Jackie
  * @Date: 2019-07-26 10:44
@@ -39,7 +41,7 @@ public interface BloomOperations<K, V> {
      * @auther: Jackie
      * @date: 2019-07-26 13:36
      */
-    Boolean[] madd(K key, V... values);
+    Boolean[] madd(K key, List<V> values);
 
     /**
      * reserve + madd
@@ -49,17 +51,7 @@ public interface BloomOperations<K, V> {
      * @param values
      * @return
      */
-    Boolean[] insert(K key, long capacity, double errorRate,  V... values);
-
-    /**
-     * reserve + add with default config
-     * capacity: 1000
-     * errorRate: 0.01
-     * @param key
-     * @param values
-     * @return
-     */
-    Boolean[] insert(K key, V... values);
+    Boolean[] insert(K key, long capacity, double errorRate,  List<V> values);
 
     /**
      * Check an element is exists
@@ -81,7 +73,7 @@ public interface BloomOperations<K, V> {
      * @auther: Jackie
      * @date: 2019-07-26 13:39
      */
-    Boolean[] mexists(K key, V... values);
+    Boolean[] mexists(K key, List<V> values);
 
     /**
      * Delete a Bloom Filter
