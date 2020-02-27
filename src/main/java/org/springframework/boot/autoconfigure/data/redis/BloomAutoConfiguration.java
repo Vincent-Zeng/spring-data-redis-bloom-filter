@@ -25,7 +25,7 @@ public class BloomAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(BloomOperations.class)
-    public BloomOperations<String, String> bloomOperations(StringRedisTemplate bloomStringRedisTemplate) {
-        return new DefaultBloomOperations<>(bloomStringRedisTemplate);
+    public BloomOperations bloomOperations(StringRedisTemplate bloomStringRedisTemplate) {
+        return new DefaultBloomOperations(bloomStringRedisTemplate);
     }
 }

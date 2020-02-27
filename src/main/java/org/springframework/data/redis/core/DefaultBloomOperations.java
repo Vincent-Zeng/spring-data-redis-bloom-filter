@@ -1,22 +1,24 @@
 package org.springframework.data.redis.core;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Auther: Jackie
  * @Date: 2019-07-26 10:52
  * @Description:
  */
-public class DefaultBloomOperations<K, V> extends AbstractOperations<K, V> implements BloomOperations<K, V> {
+public class DefaultBloomOperations extends AbstractOperations<String, String> implements BloomOperations {
+    private static final String ADD_COUNT_KEY_TPL = "cnt_${bloomKey}";
 
-    public DefaultBloomOperations(RedisTemplate<K, V> template) {
+    public DefaultBloomOperations(RedisTemplate<String, String> template) {
         super(template);
     }
 
-    public void reserve(K key, double errorRate, long capacity) {
+    public void reserve(String key, double errorRate, long capacity) {
         byte[] rawKey = rawKey(key);
         byte[] rawErrorRate = rawString(String.valueOf(errorRate));
         byte[] rawInitCapacity = rawString(String.valueOf(capacity));
@@ -26,7 +28,7 @@ public class DefaultBloomOperations<K, V> extends AbstractOperations<K, V> imple
         }, true);
     }
 
-    public Boolean add(K key, V value) {
+    public Boolean add(String key, String value) {
         byte[] rawKey = rawKey(key);
         byte[] rawValue = rawValue(value);
         return execute(connection -> {
@@ -35,7 +37,7 @@ public class DefaultBloomOperations<K, V> extends AbstractOperations<K, V> imple
         }, true);
     }
 
-    public Boolean[] madd(K key, List<V> values) {
+    public Boolean[] madd(String key, List<String> values) {
         byte[][] rawArgs = rawArgs(key, values);
         return execute(connection -> {
             List<Long> ls = (List<Long>) connection.execute(BloomCommand.MADD.getCommand(), rawArgs);
@@ -44,7 +46,7 @@ public class DefaultBloomOperations<K, V> extends AbstractOperations<K, V> imple
     }
 
     @Override
-    public Boolean[] insert(K key, long capacity, double errorRate, List<V> values) {
+    public Boolean[] insert(String key, long capacity, double errorRate, List<String> values) {
         String capacityStr = String.valueOf(capacity);
         String errorRateStr = String.valueOf(errorRate);
         final String CAPACITY = "CAPACITY";
@@ -64,7 +66,53 @@ public class DefaultBloomOperations<K, V> extends AbstractOperations<K, V> imple
         }, true);
     }
 
-    public Boolean exists(K key, V value) {
+    @Override
+    public Boolean[] insert(String key, long capacity, double errorRate, int resetExpansion, long expire, TimeUnit unit, List<String> values) {
+        // key里有多少个item
+        String countKey = ADD_COUNT_KEY_TPL.replace("${bloomKey}", key);
+        ValueOperations<String, String> opsForValue = template.opsForValue();
+        String countStr = Optional.ofNullable(opsForValue.get(countKey)).orElse("0");
+        long count = Long.parseLong(countStr);
+
+        // key的expansion数目是否已经超过
+        int multiple = seriesDoubleSum(resetExpansion);
+        if (count > capacity * multiple) {
+            // 删除旧key
+            template.delete(key);
+            template.delete(countKey);
+
+            // 新key的容量要更大
+            capacity *= multiple;
+        }
+
+        // add
+        Boolean[] result = this.insert(key, capacity, errorRate, values);
+        opsForValue.increment(countKey, values.size());
+
+        // expire
+        template.expire(key, expire, unit);
+        template.expire(countKey, expire, unit);
+
+        return result;
+    }
+
+    @Override
+    public Boolean[] insert(String key, long capacity, double errorRate, long expire, TimeUnit unit, List<String> values) {
+        return this.insert(key, capacity, errorRate, 3, expire, unit, values);
+    }
+
+    private static int seriesDoubleSum(int n) {
+        int sum = 0;
+
+        for (int i = 0; i < n; i++) {
+            sum = sum + (1 << i);
+        }
+
+        return sum;
+    }
+
+
+    public Boolean exists(String key, String value) {
         byte[] rawKey = rawKey(key);
         byte[] rawValue = rawValue(value);
         return execute(connection -> {
@@ -73,7 +121,7 @@ public class DefaultBloomOperations<K, V> extends AbstractOperations<K, V> imple
         }, true);
     }
 
-    public Boolean[] mexists(K key, List<V> values) {
+    public Boolean[] mexists(String key, List<String> values) {
         byte[][] rawArgs = rawArgs(key, values);
         return execute(connection -> {
             List<Long> ls = (List<Long>) connection.execute(BloomCommand.MEXISTS.getCommand(), rawArgs);
@@ -81,11 +129,11 @@ public class DefaultBloomOperations<K, V> extends AbstractOperations<K, V> imple
         }, true);
     }
 
-    public Boolean delete(K key) {
+    public Boolean delete(String key) {
         return template.delete(key);
     }
 
-    private byte[][] rawArgs(Object key, List<V> values) {
+    private byte[][] rawArgs(Object key, List<String> values) {
         byte[][] rawArgs = new byte[1 + values.size()][];
 
         int i = 0;
@@ -98,7 +146,7 @@ public class DefaultBloomOperations<K, V> extends AbstractOperations<K, V> imple
         return rawArgs;
     }
 
-    private byte[][] rawArgs(Object key, List<Object> params, List<V> values) {
+    private byte[][] rawArgs(Object key, List<Object> params, List<String> values) {
         byte[][] rawArgs = new byte[1 + params.size() + values.size()][];
 
         int i = 0;

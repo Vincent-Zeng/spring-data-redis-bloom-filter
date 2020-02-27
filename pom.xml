@@ -6,7 +6,7 @@
 
     <groupId>org.springframework.data</groupId>
     <artifactId>spring-data-redis-bloom-filter</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 
     <properties>
         <spring-boot.version>2.1.1.RELEASE</spring-boot.version>

@@ -1,13 +1,14 @@
 package org.springframework.data.redis.core;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Auther: Jackie
  * @Date: 2019-07-26 10:44
  * @Description:
  */
-public interface BloomOperations<K, V> {
+public interface BloomOperations {
 
     /**
      * Create a Bloom Filter
@@ -19,7 +20,7 @@ public interface BloomOperations<K, V> {
      * @auther: Jackie
      * @date: 2019-07-26 13:34
      */
-    void reserve(K key, double errorRate, long capacity);
+    void reserve(String key, double errorRate, long capacity);
 
     /**
      * Add an element to filter
@@ -30,7 +31,7 @@ public interface BloomOperations<K, V> {
      * @auther: Jackie
      * @date: 2019-07-26 13:35
      */
-    Boolean add(K key, V value);
+    Boolean add(String key, String value);
 
     /**
      * Batch add elements to filter
@@ -41,7 +42,7 @@ public interface BloomOperations<K, V> {
      * @auther: Jackie
      * @date: 2019-07-26 13:36
      */
-    Boolean[] madd(K key, List<V> values);
+    Boolean[] madd(String key, List<String> values);
 
     /**
      * reserve + madd
@@ -51,7 +52,34 @@ public interface BloomOperations<K, V> {
      * @param values
      * @return
      */
-    Boolean[] insert(K key, long capacity, double errorRate,  List<V> values);
+    Boolean[] insert(String key, long capacity, double errorRate,  List<String> values);
+
+    /**
+     * reserve + madd
+     *
+     * @param key
+     * @param capacity
+     * @param errorRate
+     * @param resetExpansion expansion几次之后重置该key
+     * @param expire 过期时间
+     * @param unit 过期时间单位
+     * @param values
+     * @return
+     */
+    Boolean[] insert(String key, long capacity, double errorRate, int resetExpansion, long expire, TimeUnit unit, List<String> values);
+
+    /**
+     * reserve + madd
+     * resetExpansion 默认为3
+     * @param key
+     * @param capacity
+     * @param errorRate
+     * @param expire 过期时间
+     * @param unit 过期时间单位
+     * @param values
+     * @return
+     */
+    Boolean[] insert(String key, long capacity, double errorRate, long expire, TimeUnit unit, List<String> values);
 
     /**
      * Check an element is exists
@@ -62,7 +90,7 @@ public interface BloomOperations<K, V> {
      * @auther: Jackie
      * @date: 2019-07-26 13:38
      */
-    Boolean exists(K key, V value);
+    Boolean exists(String key, String value);
 
     /**
      * Batch check elements is exists
@@ -73,7 +101,7 @@ public interface BloomOperations<K, V> {
      * @auther: Jackie
      * @date: 2019-07-26 13:39
      */
-    Boolean[] mexists(K key, List<V> values);
+    Boolean[] mexists(String key, List<String> values);
 
     /**
      * Delete a Bloom Filter
@@ -83,5 +111,5 @@ public interface BloomOperations<K, V> {
      * @auther: Jackie
      * @date: 2019-07-26 13:42
      */
-    Boolean delete(K key);
+    Boolean delete(String key);
 }
